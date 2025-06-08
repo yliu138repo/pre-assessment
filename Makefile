@@ -14,6 +14,9 @@ build: clean-build
 build-img:
 	docker build -t $(DOCKER_USERNAME)/$(IMAGE_NAME):$(IMAGE_TAG) .
 
+push-img:
+	docker push $(DOCKER_USERNAME)/$(IMAGE_NAME):$(IMAGE_TAG)
+
 remove-test-container:
 	docker stop $(TEST_SERVER)
 	docker rm $(TEST_SERVER)
