@@ -1,7 +1,7 @@
 variable "aws_region" {
-    type = string
-    description = "AWS region where the infra will be deployed"
-    default = "us-east-1"
+  type        = string
+  description = "AWS region where the infra will be deployed"
+  default     = "us-east-1"
 }
 
 variable "key_name" {
@@ -16,7 +16,7 @@ variable "public_key_path" {
 
 variable "instance_type" {
   default = "t2.micro"
-  type = string
+  type    = string
 }
 
 variable "ami_id" {
@@ -26,7 +26,7 @@ variable "ami_id" {
 }
 
 variable "web_server_port" {
-    type = number
-    description = "The port of the EC2 instance that the web server will listen to"
-    default = 8080
+  type        = number
+  description = "The port of the EC2 instance that the web server will listen to"
+  default     = 8080
 }

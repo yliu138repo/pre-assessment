@@ -18,3 +18,11 @@
 
 ## Pre-Requisites
 - In the bootstrap folder, run `terraform apply` to create the statefile s3 bucket.
+
+## Provision
+```bash
+terraform fmt
+terraform validate
+t plan -out plan.tfplan -var-file=dev.tfvars
+t apply -auto-approve plan.tfplan
+```

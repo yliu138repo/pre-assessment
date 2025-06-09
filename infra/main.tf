@@ -4,12 +4,12 @@ provider "aws" {
 
 # VPC
 resource "aws_vpc" "main" {
-    cidr_block           = "10.0.0.0/16"
-    enable_dns_support   = true
-    enable_dns_hostnames = true
-    tags = {
-        Name = "main_vpc"
-    }
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+  tags = {
+    Name = "main_vpc"
+  }
 }
 
 # IGW
@@ -150,7 +150,41 @@ resource "aws_instance" "vmb" {
   }
 }
 
-# NAT GW
+# NAT GW to enable VM B to pull images from dockerhub
+resource "aws_eip" "nat_eip" {
+  vpc = true
+  tags = {
+    Name = "nat_eip"
+  }
+}
+
+resource "aws_nat_gateway" "nat_gw" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public.id
+  depends_on    = [aws_internet_gateway.igw]
+
+  tags = {
+    Name = "nat_gateway"
+  }
+}
+
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gw.id
+  }
+
+  tags = {
+    Name = "private_route_table"
+  }
+}
+
+resource "aws_route_table_association" "private-rt-assoc" {
+  subnet_id      = aws_subnet.private.id
+  route_table_id = aws_route_table.private_rt.id
+}
 
 
 

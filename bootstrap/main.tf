@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "container-runtime-terraform-state-bucket"
+  bucket = "container-runtime-state-bucket"
   acl    = "private"
 
   versioning {

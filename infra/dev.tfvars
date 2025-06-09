@@ -1,3 +1,5 @@
-key_name="container_runtime"
+aws_region      = "us-east-1"
+key_name        = "container_runtime"
 public_key_path = "/Users/yangliu/.ssh/id_rsa.pub"
-ami_id = "ami-0c94855ba95c71c99"
+instance_type   = "t2.micro"
+ami_id          = "ami-0c94855ba95c71c99"
