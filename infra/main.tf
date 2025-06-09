@@ -141,6 +141,7 @@ resource "aws_instance" "vmb" {
   ami                    = var.ami_id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.private.id
+  private_ip             = var.web_server_ip
   vpc_security_group_ids = [aws_security_group.vm2_sg.id]
   key_name               = aws_key_pair.deployer.key_name
   user_data              = file("user_data_web.sh")

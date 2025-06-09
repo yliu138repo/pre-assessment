@@ -30,3 +30,8 @@ variable "web_server_port" {
   description = "The port of the EC2 instance that the web server will listen to"
   default     = 8080
 }
+
+variable "web_server_ip" {
+    type = string
+    description = "The static private IP address within the assigned CIDR range"
+}

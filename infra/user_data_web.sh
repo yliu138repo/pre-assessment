@@ -1,7 +1,7 @@
 #!/bin/bash
-sudo apt-get update -y
-sudo apt-get install -y docker.io
-sudo systemctl start docker
+sudo yum update -y
+sudo amazon-linux-extras install -y docker
+sudo service docker start
 sudo systemctl enable docker
 
 # Run the golang based HTTP server on port 8080
