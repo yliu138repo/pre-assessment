@@ -27,3 +27,31 @@ terraform validate
 t plan -out plan.tfplan -var-file=dev.tfvars
 t apply -auto-approve plan.tfplan
 ```
+
+## output
+curl command from VM A
+```bash
+[ec2-user@ip-10-0-1-127 (VMA) ~]$ curl -vvv http://10.0.2.77:8080
+*   Trying 10.0.2.77:8080...
+* Connected to 10.0.2.77 (10.0.2.77) port 8080
+> GET / HTTP/1.1
+> Host: 10.0.2.77:8080
+> User-Agent: curl/8.3.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Date: Mon, 09 Jun 2025 07:23:42 GMT
+< Content-Length: 14
+< Content-Type: text/plain; charset=utf-8
+< 
+Hello, World!
+* Connection #0 to host 10.0.2.77 left intact
+```
+
+Container logs from curl command:
+```bash
+[ec2-user@ip-10-0-2-77 ~]$ sudo docker logs web_server -f
+2025/06/09 07:23:03 Server listening on http://:8080
+```
+
+# Part 3

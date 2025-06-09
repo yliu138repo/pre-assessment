@@ -97,6 +97,13 @@ resource "aws_security_group" "vm2_sg" {
   description = "Allow HTTP from VM1"
   vpc_id      = aws_vpc.main.id
 
+#   ingress {
+#     from_port       = 22
+#     to_port         = 22
+#     protocol        = "tcp"
+#     cidr_blocks     = ["${aws_instance.vma.private_ip}/32"]
+#   }
+
   ingress {
     from_port       = 8080
     to_port         = 8080
