@@ -22,7 +22,13 @@ remove-test-container:
 	docker rm $(TEST_SERVER)
 
 run-test: remove-test-container
-	docker run --name=$(TEST_SERVER) -e LISTEN_PORT=$(PORT) -p $(HOST_PORT):$(PORT) $(DOCKER_USERNAME)/$(IMAGE_NAME):$(IMAGE_TAG)
+	docker run -d --restart always --name=$(TEST_SERVER) -e LISTEN_PORT=$(PORT) -p $(HOST_PORT):$(PORT) $(DOCKER_USERNAME)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+test-failure: 
+	curl --header "Content-Type: application/json" \
+	--request POST \
+	--data '{"fail":true}' \
+	http://localhost:8080
 
 network-debug:
 	docker run -it --net container:$(TEST_SERVER) nicolaka/netshoot

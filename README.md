@@ -29,13 +29,17 @@
 ```bash
 terraform fmt
 terraform validate
-t plan -out plan.tfplan -var-file=dev.tfvars
-t apply -auto-approve plan.tfplan
+terraform plan -out plan.tfplan -var-file=dev.tfvars
+terraform apply -auto-approve plan.tfplan
 ```
 
 ## output
 curl command from VM A
 ```bash
+# vma_private_ip = "10.0.1.154"
+# vma_public_ip = "44.203.187.218"
+# vmb_private_ip = "10.0.2.77"
+# vmb_public_ip = ""
 [ec2-user@ip-10-0-1-127 (VMA) ~]$ curl -vvv http://10.0.2.77:8080
 *   Trying 10.0.2.77:8080...
 * Connected to 10.0.2.77 (10.0.2.77) port 8080
@@ -60,3 +64,23 @@ Container logs from curl command:
 ```
 
 # Part 3
+## Assumption:
+- nginx is used as the reverse proxy
+
+## Outputs
+```bash
+# note the public IP address of VM A is 54.210.114.171
+❯ curl  http://54.210.114.171
+Hello, World!
+```
+
+
+# Summary
+## Architecture
+
+## Limitations
+- The infrastructure is not auto-scalable. It would be vulnerable in the events of high volume of traffic and resource shortage on the VMs. 
+- No observability are enabled on the workloads, such as CPU/memory utilisation on the golang web server
+
+# Future works
+- Enable CI/CD pipeline automation for image build, push and infrastructure provisons
