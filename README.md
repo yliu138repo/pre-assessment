@@ -91,7 +91,7 @@ Hello, World!
 - self-signed certificate (/certs/) is used for this project. In prod, it should be used with trusted CA. (Refer to user_data section for `resource "aws_instance" "vma"`)
 
 ## pre-requisites
-- Need to reference self-signed certificate on local machine to perform tests. 
+- Install self-signed certs (VM A: /certs/nginx.crt) and reference self-signed certificate on local machine to perform tests. 
 
 ## Outputs
 ```bash
