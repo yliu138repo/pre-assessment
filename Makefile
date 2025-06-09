@@ -22,7 +22,7 @@ remove-test-container:
 	docker rm $(TEST_SERVER)
 
 run-test: remove-test-container
-	docker run --name=$(TEST_SERVER) -e LISTEN_PORT=$(PORT) -p $(HOST_PORT):$(PORT) $(DOCKER_USERNAME)/$(IMAGE_NAME):$(IMAGE_TAG)
+	docker run -d --restart always --name=$(TEST_SERVER) -e LISTEN_PORT=$(PORT) -p $(HOST_PORT):$(PORT) $(DOCKER_USERNAME)/$(IMAGE_NAME):$(IMAGE_TAG)
 
 network-debug:
 	docker run -it --net container:$(TEST_SERVER) nicolaka/netshoot
