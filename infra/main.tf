@@ -148,10 +148,6 @@ data "template_file" "nginx_config" {
   vars = {
     backend_ip = var.web_server_ip
     hostname = "goserver.${data.aws_route53_zone.selected.name}"
-    host = "$host"
-    remote_addr = "$remote_addr"
-    proxy_add_x_forwarded_for = "$proxy_add_x_forwarded_for"
-    request_uri = "$request_uri"
   }
 }
 

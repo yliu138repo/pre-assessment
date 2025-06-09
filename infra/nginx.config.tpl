@@ -10,7 +10,7 @@ http {
         }
 
         location / {
-            return 301 https://${host}${request_uri};
+            return 301 https://$${host}$${request_uri};
         }
     }
 
@@ -27,9 +27,9 @@ http {
 
         location / {
             proxy_pass http://${backend_ip}:8080;
-            proxy_set_header Host ${host};
-            proxy_set_header X-Real-IP ${remote_addr};
-            proxy_set_header X-Forwarded-For ${proxy_add_x_forwarded_for};
+            proxy_set_header Host $${host};
+            proxy_set_header X-Real-IP $${remote_addr};
+            proxy_set_header X-Forwarded-For $${proxy_add_x_forwarded_for};
         }
     }
 }
