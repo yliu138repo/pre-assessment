@@ -97,12 +97,13 @@ resource "aws_security_group" "vm2_sg" {
   description = "Allow HTTP from VM1"
   vpc_id      = aws_vpc.main.id
 
-#   ingress {
-#     from_port       = 22
-#     to_port         = 22
-#     protocol        = "tcp"
-#     cidr_blocks     = ["${aws_instance.vma.private_ip}/32"]
-#   }
+# TODO: remove this section for production
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    cidr_blocks     = ["${aws_instance.vma.private_ip}/32"]
+  }
 
   ingress {
     from_port       = 8080
@@ -130,6 +131,14 @@ resource "aws_key_pair" "deployer" {
 }
 
 # VM A - public subnet
+data "template_file" "nginx_config" {
+  template = file("${path.module}/nginx.config.tpl")
+  vars = {
+    backend_ip = var.web_server_ip
+  }
+}
+
+
 resource "aws_instance" "vma" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
@@ -137,6 +146,25 @@ resource "aws_instance" "vma" {
   vpc_security_group_ids      = [aws_security_group.vm1_sg.id]
   key_name                    = aws_key_pair.deployer.key_name
   associate_public_ip_address = true
+
+  user_data = <<-EOF
+                #!/bin/bash
+                yum update -y
+                amazon-linux-extras install -y docker 
+                service docker start
+                systemctl enable docker
+                usermod -a -G docker ec2-user
+
+                mkdir -p /etc/nginx
+                cat <<EOT > /etc/nginx/nginx.conf
+                ${data.template_file.nginx_config.rendered}
+                EOT
+
+                docker run -d --name nginx --restart always \
+                    -p 80:80 \
+                    -v /etc/nginx/nginx.conf:/etc/nginx/nginx.conf:ro \
+                    nginx
+              EOF
 
   tags = {
     Name = "vm_a_public_subnet"

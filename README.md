@@ -36,8 +36,8 @@ terraform apply -auto-approve plan.tfplan
 ## output
 curl command from VM A
 ```bash
-# vma_private_ip = "10.0.1.127"
-# vma_public_ip = "3.83.106.231"
+# vma_private_ip = "10.0.1.154"
+# vma_public_ip = "44.203.187.218"
 # vmb_private_ip = "10.0.2.77"
 # vmb_public_ip = ""
 [ec2-user@ip-10-0-1-127 (VMA) ~]$ curl -vvv http://10.0.2.77:8080
