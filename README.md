@@ -64,7 +64,15 @@ Container logs from curl command:
 ```
 
 # Part 3
+## Assumption:
+- nginx is used as the reverse proxy
 
+## Outputs
+```bash
+# note the public IP address of VM A is 54.210.114.171
+❯ curl  http://54.210.114.171
+Hello, World!
+```
 
 
 # Summary
