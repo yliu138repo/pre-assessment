@@ -10,7 +10,7 @@
 3. In the golang program provided, I found out the server is specifically bound to 127.0.0.1. This also fails the container with port-forwarding too. The code is modified to listen to all traffic by removing the specific IP address. Refer to [main.go](./main.go)
 4. Test and run container locally and verify the connectivity by running `curl http://localhost:8080`
 
-# Part 2
+# Part 2 - Containerisation
 ## Assumptions:
 - For demonstration purpose, VM A and VM B are AWS EC2 instances within the same VPC using the same account. Multi AZ are not considered for this assessment.
 - Performance is not a consideration in this project and hence t2.micro EC2 type is selected for demo purpose.
@@ -63,20 +63,24 @@ Container logs from curl command:
 2025/06/09 07:23:03 Server listening on http://:8080
 ```
 
-# Part 3
+# Part 3 - Proxy
 ## Assumption:
-- nginx is used as the reverse proxy
+- nginx is used as the reverse proxy, listening to backend golang web server via private IP address, and exposed port 80 to outside
 
 ## Outputs
 ```bash
-# note the public IP address of VM A is 54.210.114.171
-❯ curl  http://54.210.114.171
+# note the public static IP address of VM A is 52.21.82.1
+❯ curl  http://52.21.82.1
 Hello, World!
 ```
+
+# Part 4 - TLS
+## Outputs
 
 
 # Summary
 ## Architecture
+1. Balance the simplicity and flexibility. Since this is a 2 VMs architecture, going for k
 
 ## Limitations
 - The infrastructure is not auto-scalable. It would be vulnerable in the events of high volume of traffic and resource shortage on the VMs. 

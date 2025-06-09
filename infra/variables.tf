@@ -35,3 +35,8 @@ variable "web_server_ip" {
     type = string
     description = "The static private IP address within the assigned CIDR range"
 }
+
+variable "route53_zone_id" {
+    type = string
+    description = "The ID of the public hosted Route 53 zone, which can be fetched from the aws CLI by {.HostedZones.Id}"
+}

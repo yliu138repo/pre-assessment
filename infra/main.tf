@@ -138,10 +138,20 @@ resource "aws_key_pair" "deployer" {
 }
 
 # VM A - public subnet
+data "aws_route53_zone" "selected" {
+  zone_id = var.route53_zone_id
+}
+
 data "template_file" "nginx_config" {
+  depends_on = [ aws_route53_record.vm_a_dns ]
   template = file("${path.module}/nginx.config.tpl")
   vars = {
     backend_ip = var.web_server_ip
+    hostname = "goserver.${data.aws_route53_zone.selected.name}"
+    host = "$host"
+    remote_addr = "$remote_addr"
+    proxy_add_x_forwarded_for = "$proxy_add_x_forwarded_for"
+    request_uri = "$request_uri"
   }
 }
 
@@ -162,20 +172,62 @@ resource "aws_instance" "vma" {
                 #!/bin/bash
                 yum update -y
                 amazon-linux-extras install -y docker 
+                yum install -y curl
+
+                # Install docker-compose
+                curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                chmod +x /usr/local/bin/docker-compose
+                ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
                 service docker start
                 systemctl enable docker
                 usermod -a -G docker ec2-user
 
-                mkdir -p /etc/nginx
-                cat <<EOT > /etc/nginx/nginx.conf
+                mkdir -p /app/nginx /app/certbot/www /app/certbot/conf
+                cat <<EOT > /app/nginx/nginx.conf
                 ${data.template_file.nginx_config.rendered}
                 EOT
 
-                docker run -d --name nginx --restart always \
-                    -p 80:80 \
-                    -v /etc/nginx/nginx.conf:/etc/nginx/nginx.conf:ro \
-                    nginx
+                # Create docker-compose.yml
+                cat <<'EOT' > /app/docker-compose.yml
+                version: '3'
+                services:
+                    nginx:
+                        image: nginx:latest
+                        container_name: nginx
+                        ports:
+                            - "80:80"
+                            - "443:443"
+                        volumes:
+                            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+                            - ./certbot/www:/var/www/certbot:ro
+                            - ./certbot/conf:/etc/letsencrypt:ro
+                        depends_on:
+                            - certbot
+                        restart: always
+
+                    certbot:
+                        image: certbot/certbot
+                        container_name: certbot
+                        volumes:
+                            - ./certbot/www:/var/www/certbot
+                            - ./certbot/conf:/etc/letsencrypt
+                        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $$!; done'"
+                EOT
+
+                cd /app
+                docker-compose up -d
+
+                # # Wait for Nginx to be ready
+                # echo "Waiting for Nginx to be ready..."
+                # until curl -s http://localhost:80 > /dev/null; do
+                #     sleep 2
+                # done
+                # echo "Nginx is ready."
+            
+
               EOF
+              
 
   tags = {
     Name = "vm_a_public_subnet"
@@ -187,13 +239,13 @@ resource "aws_eip_association" "vm_a_eip_assoc" {
   allocation_id = aws_eip.vm_a_eip.id
 }
 
-resource "aws_route53_zone" "public" {
-  name = "gowebserver.com"
-}
+# resource "aws_route53_zone" "public" {
+#   name = "gowebserver.com"
+# }
 
 resource "aws_route53_record" "vm_a_dns" {
-  zone_id = aws_route53_zone.public.zone_id
-  name    = "proxy"
+  zone_id = var.route53_zone_id
+  name    = "goserver"
   type    = "A"
   ttl     = 300
   records = [aws_eip.vm_a_eip.public_ip]
