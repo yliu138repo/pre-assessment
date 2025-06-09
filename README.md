@@ -80,3 +80,7 @@ Hello, World!
 
 ## Limitations
 - The infrastructure is not auto-scalable. It would be vulnerable in the events of high volume of traffic and resource shortage on the VMs. 
+- No observability are enabled on the workloads, such as CPU/memory utilisation on the golang web server
+
+# Future works
+- Enable CI/CD pipeline automation for image build, push and infrastructure provisons
