@@ -62,6 +62,18 @@ Container logs from curl command:
 [ec2-user@ip-10-0-2-77 ~]$ sudo docker logs web_server -f
 2025/06/09 07:23:03 Server listening on http://:8080
 ```
+## Simulate errors
+create a paylod.json file with 
+```bash
+{
+  "fail": true
+}
+```
+Run command
+```bash
+# in the VM A instance
+curl -X POST -H "Content-Type: application/json" -d @payload.json http://10.0.2.77:8080
+```
 
 # Part 3 - Proxy
 ## Assumption:
@@ -91,14 +103,17 @@ Hello, World!
 ## Architecture Design
 - Balance the simplicity and flexibility. Since this is a 2 VMs architecture, it might be overkill to leverage container orchestration with network overlay between containers such as k8s or docker swarm.
 - Enhance security by placing VM A in public subnet while VM B in private subnet. This setup minimizes the attack surface, as only VM A in the public subnet is accessible from the internet.
+- Security groups and network NACL are leveraged to define layered security for networks.
+- Implement NAT for Private Subnet to pull images from github repo.
 - Elastic IP is used to ensure static IP address for VM A instance.
 - Simulate container auto-restart by leveraging docker restart policy (like k8s deployment)
 - IaC using Terraform to automate the provision
 - Golang web server is modified to listen to all traffic (0.0.0.0/0) rather than 127.0.0.1.  Also modify to gracefully server stops and simulate fail path for the web server.
 
 ## Limitations
+- Single point of failure as If VM A serves as the sole access point to VM B, its failure could disrupt access to backend services. Implementing redundancy and failover mechanisms is essential to mitigate this risk.
 - The infrastructure is not auto-scalable. It would be vulnerable in the events of high volume of traffic and resource shortage on the VMs. 
-- No observability are enabled on the workloads, such as CPU/memory utilisation on the golang web server and alerting.
+- No observability are enabled on the workloads, such as CPU/memory utilisation on the golang web server and alerting. Use cloudwatch and VPC flow logs to monitor traffic patterns and detect unusual activities.
 - ECR with private link should be leveraged instead of github repo through Internet.
 - Self-signed cert is utilised for TLS connection. However, in production environment, a proper CA should be set up, e.g Lets encrypt.
 
