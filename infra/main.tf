@@ -79,6 +79,13 @@ resource "aws_security_group" "vm1_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -138,6 +145,10 @@ data "template_file" "nginx_config" {
   }
 }
 
+# To ensure VM A has a static public IP address
+resource "aws_eip" "vm_a_eip" {
+  vpc = true
+}
 
 resource "aws_instance" "vma" {
   ami                         = var.ami_id
@@ -169,6 +180,23 @@ resource "aws_instance" "vma" {
   tags = {
     Name = "vm_a_public_subnet"
   }
+}
+
+resource "aws_eip_association" "vm_a_eip_assoc" {
+  instance_id   = aws_instance.vma.id
+  allocation_id = aws_eip.vm_a_eip.id
+}
+
+resource "aws_route53_zone" "public" {
+  name = "gowebserver.com"
+}
+
+resource "aws_route53_record" "vm_a_dns" {
+  zone_id = aws_route53_zone.public.zone_id
+  name    = "proxy"
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.vm_a_eip.public_ip]
 }
 
 # VM b - Web Server - private subnet
