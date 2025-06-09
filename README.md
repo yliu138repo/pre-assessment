@@ -12,7 +12,8 @@
 
 # Part 2 - Containerisation
 ## Assumptions:
-- For demonstration purpose, VM A and VM B are AWS EC2 instances within the same VPC using the same account. Multi AZ are not considered for this assessment.
+- For demonstration purpose, VM A and VM B are AWS EC2 instances within the same VPC using the same account. 
+- Multi AZ are not considered for this assessment.
 - Performance is not a consideration in this project and hence t2.micro EC2 type is selected for demo purpose.
 - VM A sits in public subnet while VM B sits in private subnet. VM a will be able to connect to VM B web servers via private IP address.
 - Assign static IP address to VM B for the simplicity purpose. However, in production, better use DNS-based strategies for VM B to ensure scalabiilty and IP management. 
