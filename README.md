@@ -29,13 +29,17 @@
 ```bash
 terraform fmt
 terraform validate
-t plan -out plan.tfplan -var-file=dev.tfvars
-t apply -auto-approve plan.tfplan
+terraform plan -out plan.tfplan -var-file=dev.tfvars
+terraform apply -auto-approve plan.tfplan
 ```
 
 ## output
 curl command from VM A
 ```bash
+# vma_private_ip = "10.0.1.127"
+# vma_public_ip = "3.83.106.231"
+# vmb_private_ip = "10.0.2.77"
+# vmb_public_ip = ""
 [ec2-user@ip-10-0-1-127 (VMA) ~]$ curl -vvv http://10.0.2.77:8080
 *   Trying 10.0.2.77:8080...
 * Connected to 10.0.2.77 (10.0.2.77) port 8080
@@ -60,3 +64,11 @@ Container logs from curl command:
 ```
 
 # Part 3
+
+
+
+# Summary
+## Architecture
+
+## Limitations
+- The infrastructure is not auto-scalable. It would be vulnerable in the events of high volume of traffic and resource shortage on the VMs. 
