@@ -75,16 +75,32 @@ Hello, World!
 ```
 
 # Part 4 - TLS
-## Outputs
+## Assumptions
+- self-signed certificate (/certs/) is used for this project. In prod, it should be used with trusted CA. (Refer to user_data section for `resource "aws_instance" "vma"`)
 
+## pre-requisites
+- Need to reference self-signed certificate on local machine to perform tests. 
+
+## Outputs
+```bash
+❯ curl --cacert ../build/selfsigned.crt https://goserver.yoursafespace.com.au
+Hello, World!
+```
 
 # Summary
-## Architecture
-1. Balance the simplicity and flexibility. Since this is a 2 VMs architecture, going for k
+## Architecture Design
+- Balance the simplicity and flexibility. Since this is a 2 VMs architecture, it might be overkill to leverage container orchestration with network overlay between containers such as k8s or docker swarm.
+- Enhance security by placing VM A in public subnet while VM B in private subnet. This setup minimizes the attack surface, as only VM A in the public subnet is accessible from the internet.
+- Elastic IP is used to ensure static IP address for VM A instance.
+- Simulate container auto-restart by leveraging docker restart policy (like k8s deployment)
+- IaC using Terraform to automate the provision
+- Golang web server is modified to listen to all traffic (0.0.0.0/0) rather than 127.0.0.1.  Also modify to gracefully server stops and simulate fail path for the web server.
 
 ## Limitations
 - The infrastructure is not auto-scalable. It would be vulnerable in the events of high volume of traffic and resource shortage on the VMs. 
-- No observability are enabled on the workloads, such as CPU/memory utilisation on the golang web server
+- No observability are enabled on the workloads, such as CPU/memory utilisation on the golang web server and alerting.
+- ECR with private link should be leveraged instead of github repo through Internet.
+- Self-signed cert is utilised for TLS connection. However, in production environment, a proper CA should be set up, e.g Lets encrypt.
 
 # Future works
 - Enable CI/CD pipeline automation for image build, push and infrastructure provisons

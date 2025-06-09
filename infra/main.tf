@@ -168,59 +168,29 @@ resource "aws_instance" "vma" {
                 #!/bin/bash
                 yum update -y
                 amazon-linux-extras install -y docker 
-                yum install -y curl
+                # yum install -y curl
 
-                # Install docker-compose
-                curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                chmod +x /usr/local/bin/docker-compose
-                ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+                sudo service docker start
+                sudo systemctl enable docker
 
-                service docker start
-                systemctl enable docker
-                usermod -a -G docker ec2-user
-
-                mkdir -p /app/nginx /app/certbot/www /app/certbot/conf
-                cat <<EOT > /app/nginx/nginx.conf
+                mkdir -p /certs /nginx
+                cat <<EOT > /nginx/nginx.conf
                 ${data.template_file.nginx_config.rendered}
                 EOT
 
-                # Create docker-compose.yml
-                cat <<'EOT' > /app/docker-compose.yml
-                version: '3'
-                services:
-                    nginx:
-                        image: nginx:latest
-                        container_name: nginx
-                        ports:
-                            - "80:80"
-                            - "443:443"
-                        volumes:
-                            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-                            - ./certbot/www:/var/www/certbot:ro
-                            - ./certbot/conf:/etc/letsencrypt:ro
-                        depends_on:
-                            - certbot
-                        restart: always
+                openssl req -x509 -nodes -days 365 \
+                -newkey rsa:2048 \
+                -keyout /certs/nginx.key \
+                -out /certs/nginx.crt \
+                -subj "/CN=goserver.${data.aws_route53_zone.selected.name}"
 
-                    certbot:
-                        image: certbot/certbot
-                        container_name: certbot
-                        volumes:
-                            - ./certbot/www:/var/www/certbot
-                            - ./certbot/conf:/etc/letsencrypt
-                        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $$!; done'"
-                EOT
-
-                cd /app
-                docker-compose up -d
-
-                # # Wait for Nginx to be ready
-                # echo "Waiting for Nginx to be ready..."
-                # until curl -s http://localhost:80 > /dev/null; do
-                #     sleep 2
-                # done
-                # echo "Nginx is ready."
-            
+                docker run -d \
+                --name nginx-proxy \
+                --restart always \
+                -p 443:443 \
+                -v /nginx/nginx.conf:/etc/nginx/nginx.conf:ro \
+                -v /certs:/etc/nginx/certs:ro \
+                nginx
 
               EOF
               
