@@ -11,6 +11,7 @@
 - For demonstration purpose, VM A and VM B are AWS EC2 instances within the same VPC using the same account. Multi AZ are not considered for this assessment.
 - Performance is not a consideration in this project and hence t2.micro EC2 type is selected for demo purpose.
 - VM A sits in public subnet while VM B sits in private subnet. VM a will be able to connect to VM B web servers via private IP address.
+- Assign static IP address to VM B for the simplicity purpose. However, in production, better use DNS-based strategies for VM B to ensure scalabiilty and IP management. 
 - Terraform is leveraged to automate and manage the infrastructure provisions. However, versioning and regular backup of Terraform statefile is not enabled.
 - The infrastructure auotmation is simplified for demonstration purposes. There is only one single environment (Dev) for this project.
 - Currently use the github repo as the image repository. But for security consideraiton, in production, the EC2 instance within the private subnet could use ECR VPC endpoints (AWS privatelink) to avoid internet exposure.
