@@ -10,7 +10,7 @@
 3. In the golang program provided, I found out the server is specifically bound to 127.0.0.1. This also fails the container with port-forwarding too. The code is modified to listen to all traffic by removing the specific IP address. Refer to [main.go](./main.go)
 4. Test and run container locally and verify the connectivity by running `curl http://localhost:8080`
 
-# Part 2
+# Part 2 - Containerisation
 ## Assumptions:
 - For demonstration purpose, VM A and VM B are AWS EC2 instances within the same VPC using the same account. Multi AZ are not considered for this assessment.
 - Performance is not a consideration in this project and hence t2.micro EC2 type is selected for demo purpose.
@@ -62,25 +62,60 @@ Container logs from curl command:
 [ec2-user@ip-10-0-2-77 ~]$ sudo docker logs web_server -f
 2025/06/09 07:23:03 Server listening on http://:8080
 ```
+## Simulate errors
+create a paylod.json file with 
+```bash
+{
+  "fail": true
+}
+```
+Run command
+```bash
+# in the VM A instance
+curl -X POST -H "Content-Type: application/json" -d @payload.json http://10.0.2.77:8080
+```
 
-# Part 3
+# Part 3 - Proxy
 ## Assumption:
-- nginx is used as the reverse proxy
+- nginx is used as the reverse proxy, listening to backend golang web server via private IP address, and exposed port 80 to outside
 
 ## Outputs
 ```bash
-# note the public IP address of VM A is 54.210.114.171
-❯ curl  http://54.210.114.171
+# note the public static IP address of VM A is 52.21.82.1
+❯ curl  http://52.21.82.1
 Hello, World!
 ```
 
+# Part 4 - TLS
+## Assumptions
+- self-signed certificate (/certs/) is used for this project. In prod, it should be used with trusted CA. (Refer to user_data section for `resource "aws_instance" "vma"`)
+
+## pre-requisites
+- Need to reference self-signed certificate on local machine to perform tests. 
+
+## Outputs
+```bash
+❯ curl --cacert ../build/selfsigned.crt https://goserver.yoursafespace.com.au
+Hello, World!
+```
 
 # Summary
-## Architecture
+## Architecture Design
+- Balance the simplicity and flexibility. Since this is a 2 VMs architecture, it might be overkill to leverage container orchestration with network overlay between containers such as k8s or docker swarm.
+- Enhance security by placing VM A in public subnet while VM B in private subnet. This setup minimizes the attack surface, as only VM A in the public subnet is accessible from the internet.
+- Security groups and network NACL are leveraged to define layered security for networks.
+- Implement NAT for Private Subnet to pull images from github repo.
+- Elastic IP is used to ensure static IP address for VM A instance.
+- Simulate container auto-restart by leveraging docker restart policy (like k8s deployment)
+- IaC using Terraform to automate the provision
+- Golang web server is modified to listen to all traffic (0.0.0.0/0) rather than 127.0.0.1.  Also modify to gracefully server stops and simulate fail path for the web server.
 
 ## Limitations
+- Single point of failure as If VM A serves as the sole access point to VM B, its failure could disrupt access to backend services. Implementing redundancy and failover mechanisms is essential to mitigate this risk.
 - The infrastructure is not auto-scalable. It would be vulnerable in the events of high volume of traffic and resource shortage on the VMs. 
-- No observability are enabled on the workloads, such as CPU/memory utilisation on the golang web server
+- No observability are enabled on the workloads, such as CPU/memory utilisation on the golang web server and alerting. Use cloudwatch and VPC flow logs to monitor traffic patterns and detect unusual activities.
+- ECR with private link should be leveraged instead of github repo through Internet.
+- Self-signed cert is utilised for TLS connection. However, in production environment, a proper CA should be set up, e.g Lets encrypt.
 
 # Future works
 - Enable CI/CD pipeline automation for image build, push and infrastructure provisons

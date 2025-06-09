@@ -79,6 +79,13 @@ resource "aws_security_group" "vm1_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -131,13 +138,23 @@ resource "aws_key_pair" "deployer" {
 }
 
 # VM A - public subnet
+data "aws_route53_zone" "selected" {
+  zone_id = var.route53_zone_id
+}
+
 data "template_file" "nginx_config" {
+  depends_on = [ aws_route53_record.vm_a_dns ]
   template = file("${path.module}/nginx.config.tpl")
   vars = {
     backend_ip = var.web_server_ip
+    hostname = "goserver.${data.aws_route53_zone.selected.name}"
   }
 }
 
+# To ensure VM A has a static public IP address
+resource "aws_eip" "vm_a_eip" {
+  vpc = true
+}
 
 resource "aws_instance" "vma" {
   ami                         = var.ami_id
@@ -151,24 +168,53 @@ resource "aws_instance" "vma" {
                 #!/bin/bash
                 yum update -y
                 amazon-linux-extras install -y docker 
-                service docker start
-                systemctl enable docker
-                usermod -a -G docker ec2-user
+                # yum install -y curl
 
-                mkdir -p /etc/nginx
-                cat <<EOT > /etc/nginx/nginx.conf
+                sudo service docker start
+                sudo systemctl enable docker
+
+                mkdir -p /certs /nginx
+                cat <<EOT > /nginx/nginx.conf
                 ${data.template_file.nginx_config.rendered}
                 EOT
 
-                docker run -d --name nginx --restart always \
-                    -p 80:80 \
-                    -v /etc/nginx/nginx.conf:/etc/nginx/nginx.conf:ro \
-                    nginx
+                openssl req -x509 -nodes -days 365 \
+                -newkey rsa:2048 \
+                -keyout /certs/nginx.key \
+                -out /certs/nginx.crt \
+                -subj "/CN=goserver.${data.aws_route53_zone.selected.name}"
+
+                docker run -d \
+                --name nginx-proxy \
+                --restart always \
+                -p 443:443 \
+                -v /nginx/nginx.conf:/etc/nginx/nginx.conf:ro \
+                -v /certs:/etc/nginx/certs:ro \
+                nginx
+
               EOF
+              
 
   tags = {
     Name = "vm_a_public_subnet"
   }
+}
+
+resource "aws_eip_association" "vm_a_eip_assoc" {
+  instance_id   = aws_instance.vma.id
+  allocation_id = aws_eip.vm_a_eip.id
+}
+
+# resource "aws_route53_zone" "public" {
+#   name = "gowebserver.com"
+# }
+
+resource "aws_route53_record" "vm_a_dns" {
+  zone_id = var.route53_zone_id
+  name    = "goserver"
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.vm_a_eip.public_ip]
 }
 
 # VM b - Web Server - private subnet
